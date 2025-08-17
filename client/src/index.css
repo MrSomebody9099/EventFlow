@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Great+Vibes&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(45, 50%, 98%);
+  --foreground: hsl(0, 0%, 18%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(0, 0%, 18%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(0, 0%, 18%);
+  --primary: hsl(353, 30%, 80%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(36, 25%, 95%);
+  --secondary-foreground: hsl(0, 0%, 18%);
+  --muted: hsl(36, 25%, 95%);
+  --muted-foreground: hsl(0, 0%, 45%);
+  --accent: hsl(351, 22%, 68%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(353, 30%, 80%);
+  --input: hsl(0, 0%, 100%);
+  --ring: hsl(353, 30%, 80%);
+  --chart-1: hsl(353, 30%, 80%);
+  --chart-2: hsl(19, 60%, 71%);
+  --chart-3: hsl(111, 18%, 69%);
+  --chart-4: hsl(280, 65%, 75%);
+  --chart-5: hsl(200, 70%, 75%);
+  
+  /* Custom wedding colors */
+  --rose-soft: hsl(353, 30%, 80%);
+  --rose-dusty: hsl(351, 22%, 68%);
+  --cream: hsl(45, 50%, 98%);
+  --beige: hsl(36, 25%, 95%);
+  --charcoal: hsl(0, 0%, 18%);
+  --coral: hsl(19, 60%, 71%);
+  --sage: hsl(111, 18%, 69%);
+  
+  --font-script: 'Dancing Script', cursive;
+  --radius: 1rem;
+}
+
+.dark {
+  --background: hsl(0, 0%, 9%);
+  --foreground: hsl(0, 0%, 95%);
+  --card: hsl(0, 0%, 9%);
+  --card-foreground: hsl(0, 0%, 95%);
+  --popover: hsl(0, 0%, 9%);
+  --popover-foreground: hsl(0, 0%, 95%);
+  --primary: hsl(353, 30%, 60%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(0, 0%, 15%);
+  --secondary-foreground: hsl(0, 0%, 95%);
+  --muted: hsl(0, 0%, 15%);
+  --muted-foreground: hsl(0, 0%, 65%);
+  --accent: hsl(351, 22%, 48%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(0, 0%, 15%);
+  --input: hsl(0, 0%, 15%);
+  --ring: hsl(353, 30%, 60%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-script);
+  }
+  
+  h1, h2, h3, h4, h5, h6, .script-text {
+    font-family: var(--font-script);
+  }
+}
+
+@layer utilities {
+  .font-script {
+    font-family: var(--font-script);
+  }
+  
+  .text-rose-soft {
+    color: var(--rose-soft);
+  }
+  
+  .text-rose-dusty {
+    color: var(--rose-dusty);
+  }
+  
+  .text-charcoal {
+    color: var(--charcoal);
+  }
+  
+  .text-coral {
+    color: var(--coral);
+  }
+  
+  .text-sage {
+    color: var(--sage);
+  }
+  
+  .bg-rose-soft {
+    background-color: var(--rose-soft);
+  }
+  
+  .bg-rose-dusty {
+    background-color: var(--rose-dusty);
+  }
+  
+  .bg-cream {
+    background-color: var(--cream);
+  }
+  
+  .bg-beige {
+    background-color: var(--beige);
+  }
+  
+  .bg-charcoal {
+    background-color: var(--charcoal);
+  }
+  
+  .bg-coral {
+    background-color: var(--coral);
+  }
+  
+  .bg-sage {
+    background-color: var(--sage);
+  }
+  
+  .border-rose-soft {
+    border-color: var(--rose-soft);
+  }
+  
+  .border-rose-dusty {
+    border-color: var(--rose-dusty);
+  }
+  
+  .hover\:bg-rose-dusty:hover {
+    background-color: var(--rose-dusty);
+  }
+  
+  .focus\:border-rose-dusty:focus {
+    border-color: var(--rose-dusty);
+  }
+  
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.7);
+  }
+  
+  .calendar-day.highlighted {
+    background: linear-gradient(135deg, var(--rose-soft), var(--rose-dusty));
+  }
+}

@@ -1,0 +1,70 @@
+🧭 Context — What the app is
+
+This is a wedding / event planning web application designed to help a user organize every part of their event in one central dashboard.
+
+The goal is to replace notebooks and spreadsheets with a digital planner where the user can:
+
+Set up their event details (name, type, date, partner, budget, etc.)
+
+Track expenses and keep the budget up to date
+
+Manage vendors and their contact info
+
+Add and view a list of guests
+
+See how many days are left until the event
+
+Highlight the event date on a calendar
+
+Collect inspiration images
+
+Keep a checklist / to-do list
+
+The entire interface should have an elegant style, using a calligraphic font for every text element (headings, buttons, forms, sidebar items, dates, etc.).
+
+✅ Rewritten Instructions (for Replit)
+1. Setup / Onboarding screen
+
+Start with a form where the user fills in the following:
+
+Field
+Name
+Email
+Event name
+Event type
+Event date
+Partner name
+Budget (total)
+
+These values should be saved (you can keep them in variables, localStorage or state).
+
+Include an “Edit Profile” option later so the user can update this information.
+
+2. After submitting → show Dashboard
+
+The dashboard has these sections:
+
+Section	Function
+💰 Budget	Display Initial Budget, Used Budget, and Remaining Budget. Include a “+ Expense” button. When clicked, let the user enter an expense name + amount. Every expense subtracts from the original budget. If expenses exceed the budget → the remaining budget value should become negative (and appear in red or with a minus sign).
+🏢 Vendors	Add vendors. Each vendor has Name + Contact Number. Show them in a list.
+👥 Guests	Add guests. Each guest needs Guest Name + Guest Number / Count.
+📅 Timeline	Calculate how many days are left until the event date from the setup form. Include a calendar that highlights the event date in light pink.
+🎨 Inspiration	Section for storing ideas / images (mood board).
+✅ Checklist	A to-do list. Add a “+ Add Checklist” button. When a task is checked → scratch it out or move it to the bottom. Also allow editing / deleting items.
+3. Budget Logic                                                                                                                                   initialBudget  <-- value from onboarding 
+− (sum of all expense amounts)
+-------------------------------------
+= remainingBudget
+
+if remainingBudget < 0:
+    display value as negative (means budget has been exceeded)   Update this calculation every time a new expense is added.                                                                                                                                             4. Fonts / Style
+
+Use a calligraphic font for ALL text in the UI.
+(e.g. import Google Font like Great Vibes or Dancing Script and assign it to body { font-family: ... }) 🛠️ Languages Used
+File / Function	Language
+.html file (UI structure)	HTML
+styling / fonts	CSS
+interactivity (form submit, budget calculation, checklist, etc.)	JavaScript
+For Next.js apps (like page.tsx)	TypeScript + React JSX
+
+page.tsx specifically = a Next.js page written in TypeScript with JSX. make it look as clean as posible refer images  

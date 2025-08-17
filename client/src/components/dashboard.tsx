@@ -6,6 +6,7 @@ import GuestsSection from "./guests-section";
 import TimelineSection from "./timeline-section";
 import ChecklistSection from "./checklist-section";
 import InspirationSection from "./inspiration-section";
+import WhopIntegration from "./whop-integration";
 import { Button } from "@/components/ui/button";
 
 interface DashboardProps {
@@ -77,6 +78,11 @@ export default function Dashboard({ user, onEditProfile }: DashboardProps) {
           <VendorsSection userId={user.id} />
           <GuestsSection userId={user.id} />
           <ChecklistSection userId={user.id} />
+        </div>
+
+        {/* Whop Integration */}
+        <div className="mt-8">
+          <WhopIntegration userId={user.id} />
         </div>
 
         {/* Inspiration Board */}

@@ -1,6 +1,6 @@
 # Overview
 
-This is a wedding/event planning web application designed to help users organize every aspect of their event in one central dashboard. The application allows users to set up event details, track expenses and budgets, manage vendors, organize guest lists, maintain checklists, collect inspiration images, and view event timelines with calendar integration. The interface features an elegant design with calligraphic fonts throughout all text elements.
+EventFlow is a comprehensive event planning web application designed to help users organize every aspect of their event in one central dashboard. The application supports weddings, anniversaries, engagement parties, receptions, and other event types. Users can set up event details, track expenses and budgets, manage vendors, organize guest lists, maintain checklists, collect inspiration images, and view event timelines with calendar integration. The interface features an elegant design with calligraphic fonts throughout all text elements and integrates with Whop for premium features and user authentication.
 
 # User Preferences
 
@@ -52,6 +52,11 @@ Preferred communication style: Simple, everyday language.
 - **@tanstack/react-query**: Server state management and caching
 - **@radix-ui/react-***: Accessible UI primitive components
 - **react-hook-form & @hookform/resolvers**: Form management with Zod validation
+
+## Whop Integration
+- **Whop API**: Premium features and user authentication platform
+- **Environment Variables**: WHOP_API_KEY, NEXT_PUBLIC_WHOP_APP_ID, NEXT_PUBLIC_WHOP_AGENT_USER_ID, NEXT_PUBLIC_WHOP_COMPANY_ID
+- **Features**: User verification, access control, premium event planning features
 
 ## Development Tools
 - **Vite**: Build tool and development server

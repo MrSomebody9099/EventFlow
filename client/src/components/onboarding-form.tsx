@@ -70,9 +70,9 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <h1 className="font-script text-5xl text-charcoal mb-2" data-testid="onboarding-title">
-              Welcome to Your Wedding Journey
+              Welcome to EventFlow
             </h1>
-            <p className="text-gray-600 text-lg">Let's start planning your perfect day</p>
+            <p className="text-gray-600 text-lg">Let's start planning your perfect event</p>
           </div>
           
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="onboarding-form">

@@ -153,7 +153,7 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               </div>
               
               <div>
-                <Label className="font-script text-xl text-charcoal">Partner's Name</Label>
+                <Label className="font-script text-xl text-charcoal">Partner's Name (Optional)</Label>
                 <Input
                   {...form.register("partnerName")}
                   placeholder="Partner's name"

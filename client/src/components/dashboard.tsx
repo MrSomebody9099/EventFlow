@@ -36,7 +36,7 @@ export default function Dashboard({ user, onEditProfile }: DashboardProps) {
                 {user.eventName}
               </h1>
               <p className="text-gray-600 mt-1 font-script" data-testid="text-user-name">
-                {user.name}
+                {user.name} • {user.eventType === 'other' && user.customEventType ? user.customEventType : user.eventType.charAt(0).toUpperCase() + user.eventType.slice(1)}
               </p>
             </div>
             <div className="flex items-center space-x-4">

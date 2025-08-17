@@ -22,6 +22,7 @@ interface OnboardingFormProps {
 export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCustomEventType, setShowCustomEventType] = useState(false);
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(insertUserSchema),
@@ -30,6 +31,7 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
       email: "",
       eventName: "",
       eventType: "",
+      customEventType: "",
       eventDate: "",
       partnerName: "",
       budget: "25000",
@@ -45,8 +47,8 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
       storeUser(user);
       onComplete(user);
       toast({
-        title: "Welcome to your wedding planner!",
-        description: "Your profile has been created successfully.",
+        title: "Welcome to EventFlow!",
+        description: "Your event profile has been created successfully.",
       });
     },
     onError: (error) => {
@@ -91,7 +93,7 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               </div>
               
               <div>
-                <Label className="font-script text-xl text-charcoal">Email Address</Label>
+                <Label className="font-script text-xl text-charcoal">Email Address (Optional)</Label>
                 <Input
                   {...form.register("email")}
                   type="email"
@@ -121,7 +123,13 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               
               <div>
                 <Label className="font-script text-xl text-charcoal">Event Type</Label>
-                <Select onValueChange={(value) => form.setValue("eventType", value)}>
+                <Select onValueChange={(value) => {
+                  form.setValue("eventType", value);
+                  setShowCustomEventType(value === "other");
+                  if (value !== "other") {
+                    form.setValue("customEventType", "");
+                  }
+                }}>
                   <SelectTrigger className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script" data-testid="select-event-type">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -130,10 +138,24 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
                     <SelectItem value="anniversary">Anniversary</SelectItem>
                     <SelectItem value="engagement">Engagement Party</SelectItem>
                     <SelectItem value="reception">Reception</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 {form.formState.errors.eventType && (
                   <p className="text-red-500 text-sm mt-1">{form.formState.errors.eventType.message}</p>
+                )}
+                {showCustomEventType && (
+                  <div className="mt-4">
+                    <Input
+                      {...form.register("customEventType")}
+                      placeholder="Enter your event type"
+                      className="p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                      data-testid="input-custom-event-type"
+                    />
+                    {form.formState.errors.customEventType && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.customEventType.message}</p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

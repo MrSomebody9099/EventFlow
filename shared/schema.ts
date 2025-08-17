@@ -6,9 +6,10 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  email: text("email").notNull(),
+  email: text("email"),
   eventName: text("event_name").notNull(),
   eventType: text("event_type").notNull(),
+  customEventType: text("custom_event_type"),
   eventDate: text("event_date").notNull(),
   partnerName: text("partner_name"),
   budget: decimal("budget", { precision: 10, scale: 2 }).notNull(),

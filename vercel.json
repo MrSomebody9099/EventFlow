@@ -1,0 +1,16 @@
+{
+  "buildCommand": "pnpm install --frozen-lockfile=false && pnpm build",
+  "outputDirectory": "dist/public",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors https://*.whop.com https://*.whop.io" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}
+
+

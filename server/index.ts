@@ -6,6 +6,32 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Global headers and request logging for troubleshooting iframe/CORS issues
+app.use((req, res, next) => {
+  // CORS: allow all origins and common methods/headers
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With",
+  );
+
+  // Allow embedding in iframes (note: X-Frame-Options ALLOWALL is non-standard but added per request)
+  res.header("X-Frame-Options", "ALLOWALL");
+  res.header("Content-Security-Policy", "frame-ancestors *");
+
+  // Log incoming request path and user-agent for Whop troubleshooting
+  const userAgent = req.headers["user-agent"] ?? "";
+  log(`${req.method} ${req.originalUrl} (from: ${String(userAgent)})`);
+
+  // Handle preflight requests quickly
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -60,12 +86,22 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
+  const port = parseInt(process.env.PORT || '3000', 10);
+  const listenOptions: {
+    port: number;
+    host: string;
+    reusePort?: boolean;
+  } = {
     port,
     host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  };
+
+  // reusePort is not supported on all platforms (e.g., Windows).
+  if (process.platform !== "win32") {
+    listenOptions.reusePort = true;
+  }
+
+  server.listen(listenOptions, () => {
     log(`serving on port ${port}`);
   });
 })();

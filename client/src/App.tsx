@@ -4,13 +4,14 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
-import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route component={NotFound} />
+      <Route path="/experiences/:experienceId" component={Home} />
+      {/* Catch-all: render Home for any nested path (helps when embedded under custom paths) */}
+      <Route path="/:rest*" component={Home} />
     </Switch>
   );
 }

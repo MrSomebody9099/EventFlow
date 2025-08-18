@@ -1,5 +1,8 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { createServer as createHttpServer, type Server } from "http";
+import { createServer as createHttpsServer } from "https";
+import fs from "fs";
+import path from "path";
 import { storage } from "./storage";
 import { insertUserSchema, insertExpenseSchema, insertVendorSchema, insertGuestSchema, insertTaskSchema, insertInspirationSchema } from "@shared/schema";
 import { z } from "zod";
@@ -196,6 +199,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Inspiration deleted" });
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
+  // Prefer HTTPS if local cert is provided to avoid mixed-content when embedded in HTTPS parents (e.g., Whop)
+  const keyPath = process.env.SSL_KEY_FILE || path.resolve(import.meta.dirname, "certs", "localhost.key");
+  const certPath = process.env.SSL_CERT_FILE || path.resolve(import.meta.dirname, "certs", "localhost.crt");
+
+  let server: Server;
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    const key = fs.readFileSync(keyPath);
+    const cert = fs.readFileSync(certPath);
+    server = createHttpsServer({ key, cert }, app);
+  } else {
+    server = createHttpServer(app);
+  }
+
+  return server;
 }

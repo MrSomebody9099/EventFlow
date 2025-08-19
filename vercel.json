@@ -1,19 +1,20 @@
 {
-    "headers": [
-      {
-        "source": "/(.*)",
-        "headers": [
-          {
-            "key": "Content-Security-Policy",
-            "value": "frame-ancestors https://whop.com https://app.whop.com https://creator.whop.com https://*.whop.io https://*.whop.dev;"
-          },
-          {
-            "key": "X-Frame-Options",
-            "value": "ALLOWALL"
-          }
-        ]
-      }
-    ]
-  }
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://whop.com https://app.whop.com https://creator.whop.com https://webapp.apps.whop.com https://*.whop.io https://*.whop.dev;"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "ALLOWALL"
+        }
+      ]
+    }
+  ]
+}
+
   
 

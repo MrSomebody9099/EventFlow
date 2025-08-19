@@ -95,7 +95,9 @@ export default function OnboardingForm({ onComplete, initialUser }: OnboardingFo
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await createUserMutation.mutateAsync({
+      // Offline/local fallback: create a local profile without calling the API
+      const localUser: User = {
+        id: `local-${Math.random().toString(36).slice(2)}`,
         name: "Guest",
         email: "",
         eventName: "My Event",
@@ -104,7 +106,11 @@ export default function OnboardingForm({ onComplete, initialUser }: OnboardingFo
         eventDate: calculateDefaultDate(),
         partnerName: "",
         budget: "0",
-      });
+        createdAt: new Date(),
+      } as unknown as User;
+      storeUser(localUser);
+      onComplete(localUser);
+      toast({ title: "Profile skipped", description: "You can fill details later from Edit Profile." });
     } finally {
       setIsSubmitting(false);
     }

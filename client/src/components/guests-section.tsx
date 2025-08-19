@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, User, Heart } from "lucide-react";
+import { Plus, Users, User, Heart, X, Pencil } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertGuestSchema, type Guest } from "@shared/schema";
@@ -186,30 +186,98 @@ export default function GuestsSection({ userId }: GuestsSectionProps) {
             </div>
           ) : (
             guests.map((guest) => (
-              <div key={guest.id} className="bg-beige rounded-lg p-3 flex justify-between">
-                <div>
-                  <div className="font-medium text-charcoal font-script flex items-center">
-                    <User className="w-4 h-4 mr-2" />
-                    {guest.name}
-                  </div>
-                  {guest.relationship && (
-                    <div className="text-sm text-gray-600 flex items-center mt-1">
-                      <Heart className="w-3 h-3 mr-1" />
-                      {guest.relationship}
-                    </div>
-                  )}
-                  {guest.notes && (
-                    <div className="text-xs text-gray-500 mt-1">{guest.notes}</div>
-                  )}
-                </div>
-                <span className="font-script text-rose-dusty font-semibold text-lg">
-                  {guest.count}
-                </span>
-              </div>
+              <GuestRow key={guest.id} guest={guest} />
             ))
           )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function GuestRow({ guest }: { guest: Guest }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const form = useForm<z.infer<typeof insertGuestSchema>>({
+    resolver: zodResolver(insertGuestSchema.partial()),
+    defaultValues: {
+      userId: guest.userId,
+      name: guest.name,
+      count: guest.count,
+      relationship: guest.relationship ?? "",
+      notes: guest.notes ?? "",
+    },
+  });
+
+  const updateGuest = useMutation({
+    mutationFn: async (data: Partial<Guest>) => {
+      const res = await apiRequest("PUT", `/api/guests/${guest.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", guest.userId, "guests"] });
+      setIsEditing(false);
+      toast({ title: "Updated", description: "Guest updated." });
+    },
+  });
+
+  const deleteGuest = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/guests/${guest.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", guest.userId, "guests"] });
+      toast({ title: "Deleted", description: "Guest removed." });
+    },
+  });
+
+  if (!isEditing) {
+    return (
+      <div className="bg-beige rounded-lg p-3 flex justify-between items-start">
+        <div>
+          <div className="font-medium text-charcoal font-script flex items-center">
+            <User className="w-4 h-4 mr-2" />
+            {guest.name}
+          </div>
+          {guest.relationship && (
+            <div className="text-sm text-gray-600 flex items-center mt-1">
+              <Heart className="w-3 h-3 mr-1" />
+              {guest.relationship}
+            </div>
+          )}
+          {guest.notes && (
+            <div className="text-xs text-gray-500 mt-1">{guest.notes}</div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-script text-rose-dusty font-semibold text-lg">
+            {guest.count}
+          </span>
+          <Button size="icon" variant="outline" onClick={() => setIsEditing(true)} aria-label="Edit guest">
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => deleteGuest.mutate()} aria-label="Delete guest">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={form.handleSubmit((data) => updateGuest.mutate(data))}
+      className="bg-beige rounded-lg p-3 flex items-center gap-2"
+    >
+      <Input {...form.register("name")} placeholder="Name" className="h-8" />
+      <Input {...form.register("count", { valueAsNumber: true })} type="number" min={1} className="h-8 w-20" />
+      <Input {...form.register("relationship")} placeholder="Relationship" className="h-8" />
+      <Input {...form.register("notes")} placeholder="Notes" className="h-8" />
+      <div className="flex gap-2">
+        <Button size="sm" type="submit">Save</Button>
+        <Button size="sm" variant="outline" type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
+      </div>
+    </form>
   );
 }

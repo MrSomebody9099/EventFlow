@@ -56,6 +56,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/expenses/:id", async (req, res) => {
+    try {
+      const expenseData = insertExpenseSchema.partial().parse(req.body);
+      const expense = await storage.updateExpense(req.params.id, expenseData);
+      if (!expense) {
+        return res.status(404).json({ message: "Expense not found" });
+      }
+      res.json(expense);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid expense data", error });
+    }
+  });
+
   app.delete("/api/expenses/:id", async (req, res) => {
     const deleted = await storage.deleteExpense(req.params.id);
     if (!deleted) {

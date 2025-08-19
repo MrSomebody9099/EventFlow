@@ -1,6 +1,6 @@
 import type { User } from "@shared/schema";
 
-const USER_STORAGE_KEY = "wedding-planner-user";
+const USER_STORAGE_KEY = "eventflow-user";
 
 export function storeUser(user: User): void {
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));

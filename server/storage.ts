@@ -18,6 +18,7 @@ export interface IStorage {
   // Expense operations
   getExpenses(userId: string): Promise<Expense[]>;
   createExpense(expense: InsertExpense): Promise<Expense>;
+  updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense | undefined>;
   deleteExpense(id: string): Promise<boolean>;
 
   // Vendor operations
@@ -95,6 +96,17 @@ export class MemStorage implements IStorage {
     };
     this.expenses.set(id, expense);
     return expense;
+  }
+
+  async updateExpense(id: string, updateData: Partial<InsertExpense>): Promise<Expense | undefined> {
+    const existing = this.expenses.get(id);
+    if (!existing) return undefined;
+    const updated: Expense = {
+      ...existing,
+      ...updateData,
+    } as Expense;
+    this.expenses.set(id, updated);
+    return updated;
   }
 
   async deleteExpense(id: string): Promise<boolean> {

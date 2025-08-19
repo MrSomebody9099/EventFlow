@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, DollarSign } from "lucide-react";
+import { Plus, DollarSign, X, Pencil } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertExpenseSchema, type Expense } from "@shared/schema";
@@ -66,8 +66,9 @@ export default function BudgetSection({ userId, initialBudget }: BudgetSectionPr
     addExpenseMutation.mutate(data);
   };
 
-  const usedBudget = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
-  const remainingBudget = initialBudget - usedBudget;
+  const usedBudget = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+  const safeInitial = Number.isFinite(initialBudget) ? initialBudget : 0;
+  const remainingBudget = safeInitial - usedBudget;
   const isOverBudget = remainingBudget < 0;
 
   if (isLoading) {
@@ -107,7 +108,7 @@ export default function BudgetSection({ userId, initialBudget }: BudgetSectionPr
                   <Label className="font-script text-lg text-charcoal">Expense Name</Label>
                   <Input
                     {...form.register("name")}
-                    placeholder="e.g., Wedding Venue"
+                    placeholder="e.g., Venue"
                     className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
                     data-testid="input-expense-name"
                   />
@@ -197,23 +198,90 @@ export default function BudgetSection({ userId, initialBudget }: BudgetSectionPr
               </div>
             ) : (
               expenses.map((expense) => (
-                <div key={expense.id} className="flex justify-between items-center p-3 bg-beige rounded-lg">
-                  <div>
-                    <span className="font-medium font-script">{expense.name}</span>
-                    {expense.category && <span className="text-sm text-gray-600 ml-2">({expense.category})</span>}
-                    <span className="text-sm text-gray-600 ml-2">
-                      {new Date(expense.date!).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <span className="text-coral font-semibold font-script">
-                    ${parseFloat(expense.amount).toLocaleString()}
-                  </span>
-                </div>
+                <ExpenseRow key={expense.id} expense={expense} />
               ))
             )}
           </div>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function ExpenseRow({ expense }: { expense: Expense }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+
+  const form = useForm<z.infer<typeof insertExpenseSchema>>({
+    resolver: zodResolver(insertExpenseSchema.partial()),
+    defaultValues: {
+      userId: expense.userId,
+      name: expense.name,
+      amount: String(expense.amount),
+      category: expense.category ?? "",
+    },
+  });
+
+  const updateExpense = useMutation({
+    mutationFn: async (data: Partial<Expense>) => {
+      const response = await apiRequest("PUT", `/api/expenses/${expense.id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", expense.userId, "expenses"] });
+      setIsEditing(false);
+      toast({ title: "Updated", description: "Expense updated." });
+    },
+  });
+
+  const deleteExpense = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/expenses/${expense.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", expense.userId, "expenses"] });
+      toast({ title: "Deleted", description: "Expense removed." });
+    },
+  });
+
+  if (!isEditing) {
+    return (
+      <div className="flex justify-between items-center p-3 bg-beige rounded-lg">
+        <div>
+          <span className="font-medium font-script">{expense.name}</span>
+          {expense.category && <span className="text-sm text-gray-600 ml-2">({expense.category})</span>}
+          <span className="text-sm text-gray-600 ml-2">
+            {expense.date ? new Date(expense.date).toLocaleDateString() : ""}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-coral font-semibold font-script">
+            ${Number(expense.amount || 0).toLocaleString()}
+          </span>
+          <Button size="icon" variant="outline" onClick={() => setIsEditing(true)} aria-label="Edit expense">
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => deleteExpense.mutate()} aria-label="Delete expense">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={form.handleSubmit((data) => updateExpense.mutate(data))}
+      className="flex justify-between items-center p-3 bg-beige rounded-lg gap-2"
+    >
+      <Input {...form.register("name")} className="h-8" />
+      <Input {...form.register("category")} placeholder="Category" className="h-8" />
+      <Input {...form.register("amount")} type="number" step="0.01" className="h-8 w-24" />
+      <div className="flex gap-2">
+        <Button size="sm" type="submit">Save</Button>
+        <Button size="sm" variant="outline" type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
+      </div>
+    </form>
   );
 }

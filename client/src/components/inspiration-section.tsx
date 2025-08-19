@@ -80,6 +80,20 @@ export default function InspirationSection({ userId }: InspirationSectionProps) 
     addInspirationMutation.mutate(data);
   };
 
+  const handleFilePick = async (file: File) => {
+    if (!file) return;
+    // For demo/local: convert to data URL so it shows immediately without backend storage
+    const toDataURL = (f: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = reject;
+        reader.readAsDataURL(f);
+      });
+    const url = await toDataURL(file);
+    form.setValue("imageUrl", url, { shouldValidate: true });
+  };
+
   const handleDelete = (id: string) => {
     deleteInspirationMutation.mutate(id);
   };
@@ -87,16 +101,16 @@ export default function InspirationSection({ userId }: InspirationSectionProps) 
   // Sample inspiration images for empty state
   const sampleImages = [
     {
-      url: "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-      alt: "Wedding ceremony with white flowers and elegant draping"
+      url: "https://images.unsplash.com/photo-1544145945-f90425340c7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+      alt: "Colorful birthday party balloons and confetti"
     },
     {
-      url: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-      alt: "Romantic candlelit dinner table setting"
+      url: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+      alt: "Party table with cupcakes and festive decorations"
     },
     {
-      url: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-      alt: "Beautiful wedding bouquet"
+      url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+      alt: "Friends cheering at a party with sparklers"
     }
   ];
 
@@ -143,13 +157,23 @@ export default function InspirationSection({ userId }: InspirationSectionProps) 
                   />
                 </div>
                 <div>
-                  <Label className="font-script text-lg text-charcoal">Image URL</Label>
-                  <Input
-                    {...form.register("imageUrl")}
-                    placeholder="https://example.com/image.jpg"
-                    className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
-                    data-testid="input-inspiration-url"
-                  />
+                  <Label className="font-script text-lg text-charcoal">Image</Label>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Input
+                      {...form.register("imageUrl")}
+                      placeholder="https://example.com/image.jpg"
+                      className="flex-1 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                      data-testid="input-inspiration-url"
+                    />
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void handleFilePick(file);
+                      }}
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label className="font-script text-lg text-charcoal">Category</Label>

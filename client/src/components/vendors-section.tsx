@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Briefcase, Phone, Tag } from "lucide-react";
+import { Plus, Briefcase, Phone, Tag, X, Pencil } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertVendorSchema, type Vendor } from "@shared/schema";
@@ -174,29 +174,101 @@ export default function VendorsSection({ userId }: VendorsSectionProps) {
             </div>
           ) : (
             vendors.map((vendor) => (
-              <div key={vendor.id} className="bg-beige rounded-lg p-3">
-                <div className="font-medium text-charcoal font-script flex items-center">
-                  <Briefcase className="w-4 h-4 mr-2" />
-                  {vendor.name}
-                </div>
-                <div className="text-sm text-gray-600 flex items-center mt-1">
-                  <Phone className="w-3 h-3 mr-1" />
-                  {vendor.contact}
-                </div>
-                {vendor.serviceType && (
-                  <div className="text-xs text-rose-dusty flex items-center mt-1">
-                    <Tag className="w-3 h-3 mr-1" />
-                    {vendor.serviceType}
-                  </div>
-                )}
-                {vendor.notes && (
-                  <div className="text-xs text-gray-500 mt-1">{vendor.notes}</div>
-                )}
-              </div>
+              <VendorRow key={vendor.id} vendor={vendor} />
             ))
           )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function VendorRow({ vendor }: { vendor: Vendor }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const form = useForm<z.infer<typeof insertVendorSchema>>({
+    resolver: zodResolver(insertVendorSchema.partial()),
+    defaultValues: {
+      userId: vendor.userId,
+      name: vendor.name,
+      contact: vendor.contact,
+      serviceType: vendor.serviceType ?? "",
+      notes: vendor.notes ?? "",
+    },
+  });
+
+  const updateVendor = useMutation({
+    mutationFn: async (data: Partial<Vendor>) => {
+      const res = await apiRequest("PUT", `/api/vendors/${vendor.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", vendor.userId, "vendors"] });
+      setIsEditing(false);
+      toast({ title: "Updated", description: "Vendor updated." });
+    },
+  });
+
+  const deleteVendor = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/vendors/${vendor.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", vendor.userId, "vendors"] });
+      toast({ title: "Deleted", description: "Vendor removed." });
+    },
+  });
+
+  if (!isEditing) {
+    return (
+      <div className="bg-beige rounded-lg p-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="font-medium text-charcoal font-script flex items-center">
+              <Briefcase className="w-4 h-4 mr-2" />
+              {vendor.name}
+            </div>
+            <div className="text-sm text-gray-600 flex items-center mt-1">
+              <Phone className="w-3 h-3 mr-1" />
+              {vendor.contact}
+            </div>
+            {vendor.serviceType && (
+              <div className="text-xs text-rose-dusty flex items-center mt-1">
+                <Tag className="w-3 h-3 mr-1" />
+                {vendor.serviceType}
+              </div>
+            )}
+            {vendor.notes && (
+              <div className="text-xs text-gray-500 mt-1">{vendor.notes}</div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="icon" variant="outline" onClick={() => setIsEditing(true)} aria-label="Edit vendor">
+              <Pencil className="w-4 h-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => deleteVendor.mutate()} aria-label="Delete vendor">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={form.handleSubmit((data) => updateVendor.mutate(data))}
+      className="bg-beige rounded-lg p-3 space-y-2"
+    >
+      <Input {...form.register("name")} placeholder="Name" />
+      <Input {...form.register("contact")} placeholder="Contact" />
+      <Input {...form.register("serviceType")} placeholder="Service type" />
+      <Input {...form.register("notes")} placeholder="Notes" />
+      <div className="flex gap-2 justify-end">
+        <Button size="sm" type="submit">Save</Button>
+        <Button size="sm" variant="outline" type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
+      </div>
+    </form>
   );
 }

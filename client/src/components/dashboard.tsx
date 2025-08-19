@@ -41,7 +41,7 @@ export default function Dashboard({ user, onEditProfile }: DashboardProps) {
             <div className="flex items-center space-x-4">
               <Button
                 onClick={onEditProfile}
-                className="bg-rose-soft text-white px-4 py-2 rounded-lg font-script hover:bg-rose-dusty transition-colors"
+                className="bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors"
                 data-testid="button-edit-profile"
               >
                 <Edit className="w-4 h-4 mr-2" />

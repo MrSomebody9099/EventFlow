@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, CheckSquare, Square, Check } from "lucide-react";
+import { Plus, CheckSquare, Square, Check, X, Pencil } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTaskSchema, type Task } from "@shared/schema";
@@ -64,8 +64,9 @@ export default function ChecklistSection({ userId }: ChecklistSectionProps) {
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
-      const response = await apiRequest("PUT", `/api/tasks/${id}`, { completed });
+    mutationFn: async (data: Partial<Task> & { id: string }) => {
+      const { id, ...rest } = data;
+      const response = await apiRequest("PUT", `/api/tasks/${id}`, rest);
       return response.json();
     },
     onSuccess: () => {
@@ -121,7 +122,7 @@ export default function ChecklistSection({ userId }: ChecklistSectionProps) {
                   <Label className="font-script text-lg text-charcoal">Task Description</Label>
                   <Input
                     {...form.register("description")}
-                    placeholder="e.g., Book wedding venue"
+                    placeholder="e.g., Book venue"
                     className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
                     data-testid="input-task-description"
                   />
@@ -187,33 +188,86 @@ export default function ChecklistSection({ userId }: ChecklistSectionProps) {
             </div>
           ) : (
             tasks.map((task) => (
-              <div 
-                key={task.id} 
-                className="flex items-center space-x-3 p-2 hover:bg-beige rounded transition-colors"
-              >
-                <Checkbox
-                  checked={task.completed}
-                  onCheckedChange={(checked) => handleTaskToggle(task.id, checked as boolean)}
-                  className="w-4 h-4"
-                  data-testid={`checkbox-task-${task.id}`}
-                />
-                <span 
-                  className={`font-script flex-1 ${
-                    task.completed ? 'line-through opacity-50 text-gray-500' : 'text-charcoal'
-                  }`}
-                >
-                  {task.description}
-                </span>
-                {task.dueDate && (
-                  <span className="text-xs text-gray-500">
-                    {new Date(task.dueDate).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
+              <TaskRow key={task.id} task={task} onToggle={handleTaskToggle} onUpdated={() => queryClient.invalidateQueries({ queryKey: ["/api/users", userId, "tasks"] })} />
             ))
           )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function TaskRow({ task, onToggle, onUpdated }: { task: Task; onToggle: (id: string, completed: boolean) => void; onUpdated: () => void }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const queryClient = useQueryClient();
+  const form = useForm<z.infer<typeof insertTaskSchema>>({
+    resolver: zodResolver(insertTaskSchema.partial()),
+    defaultValues: {
+      userId: task.userId,
+      description: task.description,
+      completed: task.completed,
+      priority: task.priority ?? "medium",
+      dueDate: task.dueDate ?? "",
+    },
+  });
+  const updateMutation = useMutation({
+    mutationFn: async (data: Partial<Task>) => {
+      const res = await apiRequest("PUT", `/api/tasks/${task.id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      onUpdated();
+      setIsEditing(false);
+    },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/tasks/${task.id}`);
+    },
+    onSuccess: () => {
+      onUpdated();
+    },
+  });
+
+  if (!isEditing) {
+    return (
+      <div className="flex items-center space-x-3 p-2 hover:bg-beige rounded transition-colors">
+        <Checkbox
+          checked={task.completed}
+          onCheckedChange={(checked) => onToggle(task.id, checked as boolean)}
+          className="w-4 h-4"
+          data-testid={`checkbox-task-${task.id}`}
+        />
+        <span 
+          className={`font-script flex-1 ${
+            task.completed ? 'line-through opacity-50 text-gray-500' : 'text-charcoal'
+          }`}
+        >
+          {task.description}
+        </span>
+        {task.dueDate && (
+          <span className="text-xs text-gray-500">
+            {new Date(task.dueDate).toLocaleDateString()}
+          </span>
+        )}
+        <Button size="icon" variant="outline" onClick={() => setIsEditing(true)} aria-label="Edit task">
+          <Pencil className="w-4 h-4" />
+        </Button>
+        <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate()} aria-label="Delete task">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))} className="flex items-center gap-2 p-2 bg-beige rounded">
+      <Input {...form.register("description")} className="h-8 flex-1" />
+      <Input {...form.register("dueDate")} type="date" className="h-8" />
+      <div className="flex gap-2">
+        <Button size="sm" type="submit">Save</Button>
+        <Button size="sm" variant="outline" type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
+      </div>
+    </form>
   );
 }

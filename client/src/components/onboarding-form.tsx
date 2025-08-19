@@ -17,30 +17,46 @@ type OnboardingFormData = z.infer<typeof insertUserSchema>;
 
 interface OnboardingFormProps {
   onComplete: (user: User) => void;
+  initialUser?: User;
 }
 
-export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
+export default function OnboardingForm({ onComplete, initialUser }: OnboardingFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCustomEventType, setShowCustomEventType] = useState(false);
+  const [showCustomEventType, setShowCustomEventType] = useState(initialUser?.eventType === "other" ?? false);
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(insertUserSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      eventName: "",
-      eventType: "",
-      customEventType: "",
-      eventDate: "",
-      partnerName: "",
-      budget: "25000",
-    },
+    mode: "onChange",
+    reValidateMode: "onChange",
+    defaultValues: initialUser
+      ? {
+          name: initialUser.name,
+          email: initialUser.email ?? "",
+          eventName: initialUser.eventName,
+          eventType: initialUser.eventType,
+          customEventType: initialUser.customEventType ?? "",
+          eventDate: initialUser.eventDate,
+          partnerName: initialUser.partnerName ?? "",
+          budget: String(initialUser.budget),
+        }
+      : {
+          name: "",
+          email: "",
+          eventName: "",
+          eventType: "birthday",
+          customEventType: "",
+          eventDate: "",
+          partnerName: "",
+          budget: "25000",
+        },
   });
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: OnboardingFormData) => {
-      const response = await apiRequest("POST", "/api/users", userData);
+      const method = initialUser ? "PUT" : "POST";
+      const url = initialUser ? `/api/users/${initialUser.id}` : "/api/users";
+      const response = await apiRequest(method, url, userData);
       return response.json() as Promise<User>;
     },
     onSuccess: (user) => {
@@ -54,7 +70,7 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
     onError: (error) => {
       toast({
         title: "Error creating profile",
-        description: "Please check your information and try again.",
+        description: (error as Error)?.message ?? "Please check your information and try again.",
         variant: "destructive",
       });
     },
@@ -62,29 +78,74 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
   const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
-    createUserMutation.mutate(data);
-    setIsSubmitting(false);
+    try {
+      await createUserMutation.mutateAsync(data);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const calculateDefaultDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const handleSkip = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await createUserMutation.mutateAsync({
+        name: "Guest",
+        email: "",
+        eventName: "My Event",
+        eventType: "birthday",
+        customEventType: "",
+        eventDate: calculateDefaultDate(),
+        partnerName: "",
+        budget: "0",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl">
-        <CardContent className="p-8">
-          <div className="text-center mb-8">
-            <h1 className="font-script text-5xl text-charcoal mb-2" data-testid="onboarding-title">
-              Welcome to EventFlow
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        if (!initialUser && e.currentTarget === e.target) handleSkip();
+      }}
+    >
+      <Card className="w-full max-w-lg md:max-w-2xl">
+        <CardContent className="p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+          <div className="text-center mb-6 md:mb-8">
+            <h1 className="text-3xl md:text-5xl text-neutral-900 mb-2" data-testid="onboarding-title">
+              {initialUser ? "Edit Profile" : "Welcome to EventFlow"}
             </h1>
-            <p className="text-gray-600 text-lg">Let's start planning your perfect event</p>
+            <p className="text-neutral-600 text-base md:text-lg">
+              {initialUser ? "Update your event details" : "Let's start planning your event"}
+            </p>
           </div>
-          
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="onboarding-form">
-            <div className="grid md:grid-cols-2 gap-6">
+
+          <form
+            onSubmit={form.handleSubmit(onSubmit, () =>
+              toast({
+                title: "Fill required info to continue",
+                description: "Please complete all required fields.",
+                variant: "destructive",
+              })
+            )}
+            className="space-y-5 md:space-y-6"
+            data-testid="onboarding-form"
+          >
+            <div className="grid md:grid-cols-2 gap-4 md:gap-6">
               <div>
-                <Label className="font-script text-xl text-charcoal">Your Name</Label>
+                <Label className="text-sm text-neutral-800">Your Name</Label>
                 <Input
                   {...form.register("name")}
                   placeholder="Enter your name"
-                  className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                  className="mt-2 p-3 border border-neutral-300 rounded-lg focus:border-neutral-500"
                   data-testid="input-name"
                 />
                 {form.formState.errors.name && (
@@ -93,12 +154,12 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               </div>
               
               <div>
-                <Label className="font-script text-xl text-charcoal">Email Address (Optional)</Label>
+                <Label className="text-sm text-neutral-800">Email Address (Optional)</Label>
                 <Input
                   {...form.register("email")}
                   type="email"
                   placeholder="your@email.com"
-                  className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                  className="mt-2 p-3 border border-neutral-300 rounded-lg focus:border-neutral-500"
                   data-testid="input-email"
                 />
                 {form.formState.errors.email && (
@@ -107,13 +168,13 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               </div>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-6">
               <div>
-                <Label className="font-script text-xl text-charcoal">Event Name</Label>
+                <Label className="text-sm text-neutral-800">Event Name</Label>
                 <Input
                   {...form.register("eventName")}
-                  placeholder="Our Wedding Day"
-                  className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                  placeholder="Birthday Party"
+                  className="mt-2 p-3 border border-neutral-300 rounded-lg focus:border-neutral-500"
                   data-testid="input-event-name"
                 />
                 {form.formState.errors.eventName && (
@@ -122,18 +183,19 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               </div>
               
               <div>
-                <Label className="font-script text-xl text-charcoal">Event Type</Label>
-                <Select onValueChange={(value) => {
+                <Label className="text-sm text-neutral-800">Event Type</Label>
+                <Select defaultValue={form.getValues("eventType")} onValueChange={(value) => {
                   form.setValue("eventType", value);
                   setShowCustomEventType(value === "other");
                   if (value !== "other") {
                     form.setValue("customEventType", "");
                   }
                 }}>
-                  <SelectTrigger className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script" data-testid="select-event-type">
+                  <SelectTrigger className="mt-2 p-3 border border-neutral-300 rounded-lg focus:border-neutral-500" data-testid="select-event-type">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="birthday">Birthday</SelectItem>
                     <SelectItem value="wedding">Wedding</SelectItem>
                     <SelectItem value="anniversary">Anniversary</SelectItem>
                     <SelectItem value="engagement">Engagement Party</SelectItem>
@@ -149,7 +211,7 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
                     <Input
                       {...form.register("customEventType")}
                       placeholder="Enter your event type"
-                      className="p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                      className="p-3 border border-neutral-300 rounded-lg focus:border-neutral-500"
                       data-testid="input-custom-event-type"
                     />
                     {form.formState.errors.customEventType && (
@@ -160,13 +222,13 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               </div>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-6">
               <div>
-                <Label className="font-script text-xl text-charcoal">Event Date</Label>
+                <Label className="text-sm text-neutral-800">Event Date</Label>
                 <Input
                   {...form.register("eventDate")}
                   type="date"
-                  className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                  className="mt-2 p-3 border border-neutral-300 rounded-lg focus:border-neutral-500"
                   data-testid="input-event-date"
                 />
                 {form.formState.errors.eventDate && (
@@ -175,23 +237,23 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
               </div>
               
               <div>
-                <Label className="font-script text-xl text-charcoal">Partner's Name (Optional)</Label>
+                <Label className="text-sm text-neutral-800">Partner's Name (Optional)</Label>
                 <Input
                   {...form.register("partnerName")}
                   placeholder="Partner's name"
-                  className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                  className="mt-2 p-3 border border-neutral-300 rounded-lg focus:border-neutral-500"
                   data-testid="input-partner-name"
                 />
               </div>
             </div>
             
             <div>
-              <Label className="font-script text-xl text-charcoal">Total Budget ($)</Label>
+              <Label className="text-sm text-neutral-800">Total Budget ($)</Label>
               <Input
                 {...form.register("budget")}
                 type="number"
                 placeholder="25000"
-                className="mt-2 p-3 border-2 border-rose-soft rounded-xl focus:border-rose-dusty font-script"
+                className="mt-2 p-3 border border-neutral-300 rounded-lg focus:border-neutral-500"
                 data-testid="input-budget"
               />
               {form.formState.errors.budget && (
@@ -201,12 +263,24 @@ export default function OnboardingForm({ onComplete }: OnboardingFormProps) {
             
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-rose-soft to-rose-dusty text-white py-4 px-6 rounded-xl font-script text-2xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+              disabled={!form.formState.isValid || isSubmitting}
+              className="w-full bg-neutral-900 hover:bg-neutral-800 text-white py-3 px-5 rounded-lg text-lg transition-colors"
               data-testid="button-submit-onboarding"
             >
-              {isSubmitting ? "Creating your planner..." : "Begin Planning My Event"}
+              {isSubmitting
+                ? initialUser ? "Saving..." : "Creating your planner..."
+                : initialUser ? "Save Changes" : "Begin Planning My Event"}
             </Button>
+
+            {!initialUser && (
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="w-full text-sm text-neutral-600 hover:text-neutral-800"
+              >
+                Skip for now — I’ll fill this out later
+              </button>
+            )}
           </form>
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { localApi } from "@/lib/localApi";
+import { localApi, isJsonResponse } from "@/lib/localApi";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -20,7 +20,7 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  if (res.ok) return res;
+  if (res.ok && isJsonResponse(res)) return res;
 
   // Fallback to local API for common endpoints when server is unavailable in production
   try {
@@ -126,7 +126,7 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
-    if (res.ok) return await res.json();
+    if (res.ok && isJsonResponse(res)) return await res.json();
 
     // Fallback for lists
     try {

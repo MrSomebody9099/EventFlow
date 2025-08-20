@@ -56,6 +56,7 @@ export default function OnboardingForm({ onComplete, initialUser }: OnboardingFo
     mutationFn: async (userData: OnboardingFormData) => {
       const method = initialUser ? "PUT" : "POST";
       const url = initialUser ? `/api/users/${initialUser.id}` : "/api/users";
+      // Force JSON Accept to avoid Vercel 404 fallback html
       const response = await apiRequest(method, url, userData);
       return response.json() as Promise<User>;
     },

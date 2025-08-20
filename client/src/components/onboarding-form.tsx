@@ -68,12 +68,42 @@ export default function OnboardingForm({ onComplete, initialUser }: OnboardingFo
         description: "Your event profile has been created successfully.",
       });
     },
-    onError: (error) => {
-      toast({
-        title: "Error creating profile",
-        description: (error as Error)?.message ?? "Please check your information and try again.",
-        variant: "destructive",
-      });
+    onError: (_error, variables) => {
+      // Final client-side fallback: save locally so the user can proceed even if API fails in embedded/prod
+      try {
+        if (initialUser) {
+          const updated: User = {
+            ...(initialUser as User),
+            ...(variables as Partial<User>),
+          } as User;
+          storeUser(updated);
+          onComplete(updated);
+          toast({ title: "Saved locally", description: "Profile updated locally." });
+          return;
+        }
+
+        const localUser: User = {
+          id: `local-${Math.random().toString(36).slice(2)}`,
+          name: variables.name,
+          email: variables.email ?? "",
+          eventName: variables.eventName,
+          eventType: variables.eventType,
+          customEventType: variables.customEventType ?? "",
+          eventDate: variables.eventDate,
+          partnerName: variables.partnerName ?? "",
+          budget: String(variables.budget ?? "0"),
+          createdAt: new Date(),
+        } as unknown as User;
+        storeUser(localUser);
+        onComplete(localUser);
+        toast({ title: "Profile created locally", description: "You can edit and continue planning." });
+      } catch (e) {
+        toast({
+          title: "Error creating profile",
+          description: (e as Error)?.message ?? "Please check your information and try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 

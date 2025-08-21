@@ -37,6 +37,22 @@ function writeCollection<T>(name: CollectionName, items: T[]): void {
 }
 
 export const localApi = {
+  // List all users (events)
+  async listUsers(): Promise<User[]> {
+    return readCollection<User>("users");
+  },
+  // Upsert a full user object into local storage (used when server returns a User)
+  async upsertUser(user: User): Promise<User> {
+    const users = readCollection<User>("users");
+    const idx = users.findIndex(u => u.id === user.id);
+    if (idx === -1) {
+      users.push(user);
+    } else {
+      users[idx] = user;
+    }
+    writeCollection("users", users);
+    return user;
+  },
   // Users
   async createUser(data: InsertUser): Promise<User> {
     const users = readCollection<User>("users");
@@ -62,6 +78,10 @@ export const localApi = {
     const user = users.find(u => u.id === id);
     if (!user) throw new Error("User not found");
     return user;
+  },
+  async deleteUser(id: string): Promise<void> {
+    const users = readCollection<User>("users");
+    writeCollection("users", users.filter(u => u.id !== id));
   },
 
   // Expenses
